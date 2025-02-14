@@ -36,7 +36,7 @@ public:
 
 private:
     void on_can_msg(const can_frame& frame);
-    void set_axis_command_mode(const Axis& axis);
+    void set_axis_command_mode(Axis& axis);
 
     bool active_;
     EpollEventLoop event_loop_;
@@ -356,7 +356,7 @@ void ODriveHardwareInterface::on_can_msg(const can_frame& frame) {
     }
 }
 
-void ODriveHardwareInterface::set_axis_command_mode(const Axis& axis) {
+void ODriveHardwareInterface::set_axis_command_mode(Axis& axis) {
     if (!active_) {
         RCLCPP_INFO(rclcpp::get_logger("ODriveHardwareInterface"), "Interface inactive. Setting axis to idle.");
         Set_Axis_State_msg_t idle_msg;
@@ -374,6 +374,12 @@ void ODriveHardwareInterface::set_axis_command_mode(const Axis& axis) {
     state_msg.Axis_Requested_State = AXIS_STATE_CLOSED_LOOP_CONTROL;
 
     if (axis.pos_input_enabled_) {
+
+        // initialize the position setpoint to the current encoder reading
+        axis.pos_setpoint_ = axis.pos_estimate_;
+        axis.vel_setpoint_ = 0.0f;
+        axis.torque_setpoint_ = 0.0f;
+        
         RCLCPP_INFO(rclcpp::get_logger("ODriveHardwareInterface"), "Setting to position control.");
         control_msg.Control_Mode = CONTROL_MODE_POSITION_CONTROL;
     } else if (axis.vel_input_enabled_) {
