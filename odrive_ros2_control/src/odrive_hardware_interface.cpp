@@ -292,6 +292,7 @@ return_type ODriveHardwareInterface::read(const rclcpp::Time& timestamp, const r
 }
 
 return_type ODriveHardwareInterface::write(const rclcpp::Time&, const rclcpp::Duration&) {
+    int i = 0;
     for (auto& axis : axes_) {
         // Send the CAN message that fits the set of enabled setpoints
         if (axis.pos_input_enabled_) {
@@ -312,6 +313,12 @@ return_type ODriveHardwareInterface::write(const rclcpp::Time&, const rclcpp::Du
                 msg.Torque_FF = axis.torque_input_enabled_
                                   ? (axis.torque_setpoint_ / axis.transmission_ratio_)
                                   : 0.0f; // Apply inverse transmission ratio to feed-forward term
+                if(i == 2){
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("ODriveHardwareInterface"), "Setting axis " << i << " position to: " << axis.pos_setpoint_);
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("ODriveHardwareInterface"), "Setting axis " << i << " velocity to: " << axis.vel_setpoint_);
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("ODriveHardwareInterface"), "Axis " << i << " position set to: " << msg.Input_Pos);
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("ODriveHardwareInterface"), "Axis " << i << " velocity set to: " << msg.Vel_FF);
+                }
             }
 
             axis.send(msg);
@@ -343,6 +350,7 @@ return_type ODriveHardwareInterface::write(const rclcpp::Time&, const rclcpp::Du
         } else {
             // no control enabled - don't send any setpoint
         }
+        i++;
     }
 
     return return_type::OK;
